@@ -13,14 +13,15 @@
  */
 
 var webpack = require('webpack');
-var filename = 'FluxThis' +
+var filename = '[name]' +
     (process.env.NODE_ENV ==='production' ? '.min' : '') +
     '.js';
 
 module.exports = {
     cache: true,
     entry: {
-        FluxThis: './src/FluxThis'
+        FluxThis: './src/FluxThis',
+        pages: './gh-pages/js/gh-pages'
     },
     output: {
         path: __dirname + '/build',
@@ -28,6 +29,7 @@ module.exports = {
         library: 'FluxThis',
         libraryTarget: 'umd'
     },
+    debug: true,
     devtool: 'sourcemap',
     plugins: [
         new webpack.DefinePlugin({
@@ -43,7 +45,11 @@ module.exports = {
     },
     module: {
         loaders: [{
-             test: /\.es6\.js$/, exclude: /node_modules/, loader: 'babel-loader'
+            test: /\.es6\.js$/, loader: 'babel-loader',
+        }, {
+            test: /\.less$/, loader: 'style!css!less',
+        }, {
+            test: /\.css$/, loader: 'style!css',
         }]
     }
 };
