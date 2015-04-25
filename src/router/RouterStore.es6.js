@@ -34,23 +34,31 @@ function getInitializeFunction(config) {
 		// TODO: Validation on params
 
 		this.defaultMountNodeID = config.mountNodeID;
+		this.defaultPath = config.defaultPath || '/';
 
+		this.currentRoute = null;
 		this.routes = {};
 
 		for (let key in config.routes) {
 			// TODO: Add invariants
 
-			routes[key] = new Route(
-				config.path,
-				config.handler,
-				config.reactElement,
-				config.mountNodeID || this.defaultMountNodeID
+			this.routes[key] = new Route(
+				config.routes[key].path,
+				config.routes[key].handler,
+				config.routes[key].reactElement,
+				config.routes[key].mountNodeID || this.defaultMountNodeID
 			);
 		}
 
-		this.reactElement = ''; // react element
+		if (!window.location.hash) {
+			window.location.hash = this.defaultPath;
+		}
 
-		this.bindActions();
+		this.setupRoute();
+
+		this.bindActions(
+			'ROUTE_CHANGE', this.changeRoute
+		);
 	};
 }
 
@@ -60,10 +68,10 @@ function getPublicMethods() {
 			return this.reactElement;
 		},
 		getPathParams() {
-			return this.pathParams;
+			return this.currentPathParams;
 		},
 		getQueryParams() {
-			return this.queryParams;
+			return this.currentQueryParams;
 		},
 		getPath() {
 			return this.path;
@@ -75,6 +83,27 @@ function getPublicMethods() {
 }
 
 const privateMethods = {
+	changeRoute(path) {
+		// TODO: Take args which should have new path. set hash. resetup route
+		window.location.hash = `#${path}`;
+		this.setupRoute();
+	},
+	setupRoute() {
+		this.currentRoute = null;
+		debugger;
+		for (let key in this.routes) {
+			let route = this.routes[key];
+			if (this.currentQueryParams = route.matches(window.location.href)) {
+				this.currentRoute = Object.freeze(route);
+				break;
+			}
+		}
+
+		if (!this.currentRoute) {
+			// Go to default route 404.. TODO: Set this up
+			return;
+		}
+	},
 	setReactClass() {
 		invariant(
 			ReactElement instanceof ReactElement,

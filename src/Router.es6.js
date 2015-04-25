@@ -7,20 +7,17 @@ var x = {
 	Handler: require('./router/RouterComponent.es6.jsx')
 };
 
+debugger;
 new x.Router({
+
+	mountNodeID: 'test',
 	routes: {
-		'*': 'first'
-	},
-	handlers: {
-		first: function *() {
-			debugger;
-			console.log('1');
-			yield *this.second();
-			console.log('2');
-		},
-		second: function *(next) {
-			debugger;
-			console.log('foo');
+		first: {
+			path: '/',
+			handler: function () {
+				debugger;
+			}
 		}
 	}
 });
+debugger;
