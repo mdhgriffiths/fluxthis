@@ -1,7 +1,5 @@
 'use strict';
 
-require('babel/polyfill');
-
 const ObjectOrientedStore = require('./../ObjectOrientedStore.es6.js');
 
 const Immutable = require('immutable');
@@ -9,12 +7,14 @@ const invariant = require('invariant');
 
 const DisplayName = 'FluxThisRouter';
 
-class RouterStore extends ObjectOrientedStore {
+
+
+export default class RouterStore extends ObjectOrientedStore {
 	constructor(config) {
 		const parentOptions = {
 			displayName: DisplayName,
 			init: getInitializeFunction(config),
-			public: publicMethods,
+			public: getPublicMethods(),
 			private: privateMethods
 		};
 
@@ -31,13 +31,17 @@ function getInitializeFunction(config) {
 	return function () {
 		// Set from config
 		// TODO: Validation on params
-		this.routes = Immutable.Map();
-
+		this.routes = Immutable.Map(config.routes);
 
 		this.path = window.location;
-		this.currentHash = window.location.hash;
+		this.currentHash = window.location.hash.substr(1);
 
-
+		//this.routes.forEach((callback, route) => {
+		//	debugger;
+		//	if (route === '*' || new RegExp(route).test(this.currentHash)) {
+		//		const generator = callback();
+		//	}
+		//});
 
 		// TODO: Parse any query & path params
 		this.queryParams = Immutable.Map();
@@ -49,23 +53,25 @@ function getInitializeFunction(config) {
 	};
 }
 
-const publicMethods = {
-	getReactElement() {
-		return this.reactElement;
-	},
-	getPathParams() {
-		return this.pathParams;
-	},
-	getQueryParams() {
-		return this.queryParams;
-	},
-	getPath() {
-		return this.path;
-	},
-	getHashPath() {
-		return this.currentHash;
-	}
-};
+function getPublicMethods() {
+	return {
+		getReactElement() {
+			return this.reactElement;
+		},
+		getPathParams() {
+			return this.pathParams;
+		},
+		getQueryParams() {
+			return this.queryParams;
+		},
+		getPath() {
+			return this.path;
+		},
+		getHashPath() {
+			return this.currentHash;
+		}
+	};
+}
 
 const privateMethods = {
 	setReactClass(reactElement, mountNode) {
@@ -76,9 +82,3 @@ const privateMethods = {
 		)
 	}
 };
-
-debugger;
-var x = new RouterStore({
-
-});
-debugger;
