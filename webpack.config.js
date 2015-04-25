@@ -21,8 +21,8 @@ module.exports = {
     },
     output: {
         path: __dirname + '/build',
-        filename: 'FluxThis.js',
-        library: 'FluxThis',
+        filename: 'Router.js',
+        library: 'Router',
         libraryTarget: 'umd'
     },
     devtool: 'sourcemap',
@@ -40,7 +40,7 @@ module.exports = {
     },
     module: {
         loaders: [{
-             test: /\.es6\.js$/, exclude: /node_modules/, loader: 'babel-loader'
+             test: /\.es6\.jsx?/, exclude: /node_modules/, loader: 'babel-loader'
         }]
     }
 };

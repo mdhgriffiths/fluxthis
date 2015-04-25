@@ -46,6 +46,8 @@
     "babel-core": "^5.0.8",
     "immutable": "^3.7.1",
     "invariant": "^2.0.0",
+    "react": "0.13.x",
+    "react-immutable-render-mixin": "^0.8.1",
     "warning": "^1.0.1"
   }
 }
