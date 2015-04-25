@@ -10,8 +10,6 @@ export default class Route {
 	constructor(path, handler, reactElement, mountNodeID) {
 		this.path = path;
 		this.handler = handler;
-		this.reactElement = reactElement;
-		this.mountNodeID = mountNodeID;
 
 		this.keys = [];
 		this.regex = pathToRegExp(path, this.keys);

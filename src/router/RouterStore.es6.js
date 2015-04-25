@@ -1,8 +1,10 @@
 'use strict';
 
+
 const ObjectOrientedStore = require('./../ObjectOrientedStore.es6.js');
 const Route = require('./Route');
 
+const React = require('react');
 const Immutable = require('immutable');
 const invariant = require('invariant');
 
@@ -30,28 +32,20 @@ export default class RouterStore extends ObjectOrientedStore {
 
 function getInitializeFunction(config) {
 	return function () {
-		// Set from config
 		// TODO: Validation on params
-
 		this.defaultMountNodeID = config.mountNodeID;
-		this.defaultPath = config.defaultPath || '/';
+		this.defaultPath = config.defaultPath;
+		this.routeNotFoundPath = config.routeNotFoundPath || this.defaultPath;
 
 		this.currentRoute = null;
 		this.routes = {};
 
 		for (let key in config.routes) {
 			// TODO: Add invariants
-
 			this.routes[key] = new Route(
 				config.routes[key].path,
-				config.routes[key].handler,
-				config.routes[key].reactElement,
-				config.routes[key].mountNodeID || this.defaultMountNodeID
+				config.routes[key].handler
 			);
-		}
-
-		if (!window.location.hash) {
-			window.location.hash = this.defaultPath;
 		}
 
 		this.setupRoute();
@@ -78,6 +72,24 @@ function getPublicMethods() {
 		},
 		getHashPath() {
 			return this.currentHash;
+		},
+
+		/**
+		 * TODO: Make sure this isn't exposed publicly except to the router
+		 */
+		setReactElement(reactElement, props={}, optionalMountNodeID='') {
+			invariant(
+				ReactElement instanceof ReactElement,
+				`${this} You must pass a valid ReactElement object to be ` +
+				'mounted by the router.'
+			);
+
+			const mountNodeID = optionalMountNodeID || this.mountNodeID;
+
+			React.render(
+				React.createElement(reactElement, props),
+				document.getElementById(mountNodeID)
+			);
 		}
 	};
 }
@@ -88,9 +100,20 @@ const privateMethods = {
 		window.location.hash = `#${path}`;
 		this.setupRoute();
 	},
+	checkIfHashIsMissingAndSetup() {
+		if (!window.location.hash) {
+			this.navigateToDefaultPath();
+		}
+	},
+	navigateToDefaultPath() {
+		const route = this.routes[this.defaultPath];
+		window.location.hash = route.path;
+	},
 	setupRoute() {
+		this.checkIfHashIsMissingAndSetup();
+
 		this.currentRoute = null;
-		debugger;
+
 		for (let key in this.routes) {
 			let route = this.routes[key];
 			if (this.currentQueryParams = route.matches(window.location.href)) {
@@ -100,15 +123,7 @@ const privateMethods = {
 		}
 
 		if (!this.currentRoute) {
-			// Go to default route 404.. TODO: Set this up
-			return;
+			return this.navigateToDefaultPath();
 		}
-	},
-	setReactClass() {
-		invariant(
-			ReactElement instanceof ReactElement,
-			`${this} You must pass a valid ReactElement object to be ` +
-			'mounted by the router.'
-		)
 	}
 };

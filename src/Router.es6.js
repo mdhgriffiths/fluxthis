@@ -7,15 +7,25 @@ var x = {
 	Handler: require('./router/RouterComponent.es6.jsx')
 };
 
-debugger;
-new x.Router({
+const Foobar = {};
+const defaultProps = {};
 
+debugger;
+new Router({
 	mountNodeID: 'test',
+	defaultPath: 'user_list',
 	routes: {
-		first: {
-			path: '/',
-			handler: function () {
-				debugger;
+		setup_foobar: {
+			path: '/foo/:bar',
+			handler(bar) {
+				// Set default props
+				this.setReactElement(Foobar, {bar}, 'optionalMountNode');
+			}
+		},
+		user_list: {
+			path: '/users',
+			handler() {
+				this.navigateTo('setup_foobar', {bar: 'bar'});
 			}
 		}
 	}
