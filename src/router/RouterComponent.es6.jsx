@@ -10,16 +10,30 @@ export default React.createClass({
 	mixins: [RouterStore.mixin, ImmutablePureRenderMixin],
 	getStateFromStores() {
 		return {
-			ReactElement: RouterStore.getReactElement(),
+			reactElement: RouterStore.getReactElement(),
+			reactElementProps: RouterStore.getReactElementProps(),
 			queryParams: RouterStore.getQueryParams(),
 			pathParams: RouterStore.getPathParams(),
 			path: RouterStore.getPath(),
-			hashPath: RouterStore.getHashPath()
+			hashPath: RouterStore.getHashPath(),
 		};
 	},
 	render() {
-		const ReactComponent = this.state.ReactElement;
-		const RouterState = {RouterState: this.state};
+		debugger;
+		const ReactComponent = this.state.reactElement;
+
+		if (!ReactComponent) {
+			return null;
+		}
+
+		const RouterState = Object.assign({
+				RouterState: {
+					queryParams: this.state.queryParams,
+					pathParams: this.state.pathParams,
+					path: this.state.path,
+					hashPath: this.state.hashPath
+				}
+			}, this.state.reactElementProps);
 
 		return (
 			<ReactComponent {...RouterState} />

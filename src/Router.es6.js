@@ -2,6 +2,8 @@
 
 require('babel/polyfill');
 
+const React = require('react');
+
 var x = {
 	Router: require('./router/RouterStore.es6'),
 	Handler: require('./router/RouterComponent.es6.jsx')
@@ -10,24 +12,35 @@ var x = {
 const Foobar = {};
 const defaultProps = {};
 
-debugger;
-new Router({
-	mountNodeID: 'test',
+x.Router.setupRoutes({
+	mountNodeID: 'body',
 	defaultPath: 'user_list',
 	routes: {
-		setup_foobar: {
+		default: {
+			path: '/',
+			handler() {
+			}
+		},
+		setupFoobar: {
 			path: '/foo/:bar',
 			handler(bar) {
 				// Set default props
-				this.setReactElement(Foobar, {bar}, 'optionalMountNode');
+				//this.setReactElement(Foobar, {bar}, 'optionalMountNode');
 			}
 		},
-		user_list: {
+		userList: {
 			path: '/users',
 			handler() {
-				this.navigateTo('setup_foobar', {bar: 'bar'});
+				//this.navigateTo('setup_foobar', {bar: 'bar'});
 			}
 		}
 	}
 });
-debugger;
+
+x.Router.setReactElement(
+	React.createClass({
+		render() {
+			return (<div>sup</div>);
+		}
+	})
+);

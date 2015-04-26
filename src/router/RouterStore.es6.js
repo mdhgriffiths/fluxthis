@@ -10,56 +10,29 @@ const invariant = require('invariant');
 
 const DisplayName = 'FluxThisRouter';
 
-
-
-export default class RouterStore extends ObjectOrientedStore {
-	constructor(config) {
-		const parentOptions = {
-			displayName: DisplayName,
-			init: getInitializeFunction(config),
-			public: getPublicMethods(),
-			private: privateMethods
-		};
-
-		super(parentOptions);
-	}
-
+module.exports = new ObjectOrientedStore({
+	displayName: DisplayName,
 	toString() {
 		return `[${DisplayName}]`;
-	}
-}
-
-
-function getInitializeFunction(config) {
-	return function () {
-		// TODO: Validation on params
-		this.defaultMountNodeID = config.mountNodeID;
-		this.defaultPath = config.defaultPath;
-		this.routeNotFoundPath = config.routeNotFoundPath || this.defaultPath;
+	},
+	init() {
+		this.defaultPath = '';
+		this.routeNotFoundPath = '';
 
 		this.currentRoute = null;
 		this.routes = {};
 
-		for (let key in config.routes) {
-			// TODO: Add invariants
-			this.routes[key] = new Route(
-				config.routes[key].path,
-				config.routes[key].handler
-			);
-		}
-
-		this.setupRoute();
-
 		this.bindActions(
+			'SET_ROUTES', this.setupRoutes,
 			'ROUTE_CHANGE', this.changeRoute
 		);
-	};
-}
-
-function getPublicMethods() {
-	return {
+	},
+	public: {
 		getReactElement() {
 			return this.reactElement;
+		},
+		getReactElementProps() {
+			return this.reactElementProps || {};
 		},
 		getPathParams() {
 			return this.currentPathParams;
@@ -73,57 +46,75 @@ function getPublicMethods() {
 		getHashPath() {
 			return this.currentHash;
 		},
-
 		/**
 		 * TODO: Make sure this isn't exposed publicly except to the router
 		 */
-		setReactElement(reactElement, props={}, optionalMountNodeID='') {
-			invariant(
-				ReactElement instanceof ReactElement,
-				`${this} You must pass a valid ReactElement object to be ` +
-				'mounted by the router.'
-			);
+		setReactElement(reactElement, props={}) {
+			this.setReactElement(reactElement, props);
+		},
+		setupRoutes(config) {
+			//TODO: Add invariants
+			this.defaultPath = config.defaultPath;
+			this.routeNotFoundPath = config.routeNotFoundPath || this.defaultPath;
 
-			const mountNodeID = optionalMountNodeID || this.mountNodeID;
+			this.currentRoute = null;
+			this.routes = {};
+
+			for (let key in config.routes) {
+				this.routes[key] = new Route(
+					config.routes[key].path,
+					config.routes[key].handler
+				);
+			}
+
+			this.setupRoute();
+
+			const RouterHandler = require('./RouterComponent.es6.jsx');
 
 			React.render(
-				React.createElement(reactElement, props),
-				document.getElementById(mountNodeID)
+				React.createElement(RouterHandler),
+				document.getElementById(config.mountNodeID)
 			);
 		}
-	};
-}
-
-const privateMethods = {
-	changeRoute(path) {
-		// TODO: Take args which should have new path. set hash. resetup route
-		window.location.hash = `#${path}`;
-		this.setupRoute();
 	},
-	checkIfHashIsMissingAndSetup() {
-		if (!window.location.hash) {
-			this.navigateToDefaultPath();
-		}
-	},
-	navigateToDefaultPath() {
-		const route = this.routes[this.defaultPath];
-		window.location.hash = route.path;
-	},
-	setupRoute() {
-		this.checkIfHashIsMissingAndSetup();
+	private: {
+		setReactElement(reactElement, props={}) {
+			this.reactElement = reactElement;
+			this.reactElementProps = props;
+		},
+		changeRoute(path) {
+			// TODO: Take args which should have new path. set hash. resetup route
+			window.location.hash = `#${path}`;
+			this.setupRoute();
+		},
+		checkIfHashIsMissingAndSetup() {
+			if (!window.location.hash) {
+				this.navigateToDefaultPath();
+			}
+		},
+		navigateToDefaultPath() {
+			const route = this.routes[this.defaultPath];
+			window.location.hash = route.path;
+		},
+		setupRoute() {
+			this.checkIfHashIsMissingAndSetup();
 
-		this.currentRoute = null;
+			this.currentRoute = null;
 
-		for (let key in this.routes) {
-			let route = this.routes[key];
-			if (this.currentQueryParams = route.matches(window.location.href)) {
-				this.currentRoute = Object.freeze(route);
-				break;
+			for (let key in this.routes) {
+
+				let route = this.routes[key];
+				this.currentQueryParams = route.matches(window.location.href);
+
+				if (this.currentQueryParams) {
+					this.currentRoute = Object.freeze(route);
+					break;
+				}
+			}
+
+			if (!this.currentRoute) {
+				return this.navigateToDefaultPath();
 			}
 		}
-
-		if (!this.currentRoute) {
-			return this.navigateToDefaultPath();
-		}
 	}
-};
+});

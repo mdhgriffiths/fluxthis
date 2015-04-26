@@ -21,8 +21,8 @@ module.exports = {
     },
     output: {
         path: __dirname + '/build',
-        filename: 'Router.js',
-        library: 'Router',
+        filename: 'FluxThis.js',
+        library: 'FluxThis',
         libraryTarget: 'umd'
     },
     devtool: 'sourcemap',
