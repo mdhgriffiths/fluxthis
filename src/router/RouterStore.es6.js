@@ -12,9 +12,6 @@ const DisplayName = 'FluxThisRouter';
 
 module.exports = new ObjectOrientedStore({
 	displayName: DisplayName,
-	toString() {
-		return `[${DisplayName}]`;
-	},
 	init() {
 		this.defaultPath = '';
 		this.routeNotFoundPath = '';

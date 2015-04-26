@@ -19,7 +19,6 @@ export default React.createClass({
 		};
 	},
 	render() {
-		debugger;
 		const ReactComponent = this.state.reactElement;
 
 		if (!ReactComponent) {
