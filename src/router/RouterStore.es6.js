@@ -103,13 +103,16 @@ module.exports = new ObjectOrientedStore({
 
 			let mw = [setupContext(this)].concat(this.middleware);
 
-			let fn = co.wrap(compose(mw));
+			var iterator = compose(mw)();
 
-			setTimeout(function () {
-				fn().catch(function (error) {
-					debugger;
-				});
-			});
+			(function iterate () {
+				var iteration = iterator.next();
+				if (!iteration.done) {
+					iteration.value.then(function () {
+						iterator.next();
+					});
+				}
+			}())
 		},
 		checkIfHashIsMissingAndSetup() {
 			if (!this.getHashPath()) {

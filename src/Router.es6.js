@@ -22,31 +22,41 @@ const Router = {
 Router
 	.use(function *check(next) {
 		// do some checks
-		yield next;
+		console.log('start');
+		yield *next;
+		console.log('done');
 	})
 	.use(function *foo(next) {
 		// do stuff
-		yield next;
+		yield *next;
 		// do more stuff
 	})
-	.all('*', function *handler(next) {
-		yield next;
-	})
+	// .all('*', function *handler(next) {
+	// 	yield next;
+	// })
 	.route('/', 'default', function *handler(next) {
 		//this.setReactElement();
-		yield next;
+		yield *next;
 	}, {default: true})
-	.route('/foo/:bar', 'setupFoobar', function *handler(next) {
-		const pathParams = this.getPathParams();
-		this.setReactElement();
+	// .route('/foo/:bar', 'setupFoobar', function *handler(next) {
+	// 	const pathParams = this.getPathParams();
+	// 	this.setReactElement();
 
-		yield next;
-	})
-	.route('/users', 'userList', function *handler(next) {
-		this.navigateTo('setupFoobar', {bar: 'foo'});
-		yield next;
-	})
+	// 	yield next;
+	// })
+	// .route('/users', 'userList', function *handler(next) {
+	// 	this.navigateTo('setupFoobar', {bar: 'foo'});
+	// 	yield next;
+	// })
 	.use(function *foo(next) {
-		yield next;
+		console.log('middle 1');
+		yield new Promise(resolve => {
+			setTimeout(() => {
+				console.log('middle 1.5');
+				resolve();
+			}, 1000);
+		})
+		yield *next;
+		console.log('middle 2');
 	})
 	.start();
