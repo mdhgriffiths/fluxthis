@@ -16,13 +16,34 @@ const DisplayName = 'FluxThisRouter';
 module.exports = new ObjectOrientedStore({
 	displayName: DisplayName,
 	init() {
+		/**
+		 * Default path name when a route is not found or
+		 * the hash is invalid.
+		 * @type {string}
+		 */
 		this.defaultPath = '';
 
+		/**
+		 * current Route object that is set on each middleware execution
+		 * that has a positive match
+		 * @type {Route}
+		 */
 		this.currentRoute = null;
+
+		/**
+		 * All the routes the user has defined, not including `all` routes.
+		 * These are mapped as route_name => Route for fast look ups.
+		 *
+		 * @type {{String: Route}}
+		 */
 		this.routes = {};
 
-		this.defaultPath = '';
-
+		/**
+		 * Holds all the middleware functions that have been registered
+		 * including route & all generators.
+		 *
+		 * @type {Array<GeneratorFunctions>}
+		 */
 		this.middleware = [];
 
 		this.bindActions(
@@ -37,30 +58,54 @@ module.exports = new ObjectOrientedStore({
 		window.onhashchange = this.changeRoute;
 	},
 	public: {
+		/**
+		 * Get the current react element that has been registered
+		 * with the route.
+		 *
+		 * @returns {ReactElement}
+		 */
 		getReactElement() {
 			return this.reactElement;
 		},
+		/**
+		 * Get the props, if any, for the current react element.
+		 * @returns {object}
+		 */
 		getReactElementProps() {
 			return this.reactElementProps || {};
 		},
+		/**
+		 * Get the path parameters for the current route based
+		 * on the matched path that has current been matched.
+		 *
+		 * @returns {Immutable.Map}
+		 */
 		getPathParams() {
 			return Immutable.fromJS(this.currentPathParams);
 		},
+		/**
+		 * Get the query parameters for the current route based
+		 * on the matched path that has current been matched.
+		 *
+		 * @returns {Immutable.Map}
+		 */
 		getQueryParams() {
 			return Immutable.fromJS(this.currentQueryParams);
 		},
+		/**
+		 * Get the current hash path.
+		 *
+		 * @returns {string}
+		 */
 		getPath() {
-			return this.path;
-		},
-		getHashPath() {
 			return window.location.href.split('#')[1];
 		}
 	},
 	private: {
+
 		getContext() {
 			return {
 				getPath: this.getPath,
-				getHashPath: this.getHashPath,
 				getPathParams: this.getPathParams,
 				getQueryParams: this.getQueryParams,
 				setReactElement: RouterActions.setReactElement
@@ -96,7 +141,7 @@ module.exports = new ObjectOrientedStore({
 			this.reactElementProps = props;
 		},
 		changeRoute() {
-			if (!this.getHashPath()) {
+			if (!this.getPath()) {
 				window.location.hash = this.routes[this.defaultPath].path;
 				return;
 			}
@@ -112,7 +157,7 @@ module.exports = new ObjectOrientedStore({
 			});
 		},
 		checkIfHashIsMissingAndSetup() {
-			if (!this.getHashPath()) {
+			if (!this.getPath()) {
 				this.navigateToDefaultPath();
 			}
 		},

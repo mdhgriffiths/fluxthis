@@ -8,6 +8,13 @@ const URL = Symbol();
 const HANDLER = Symbol();
 
 export default class Route {
+	/**
+	 *
+	 * @param {string} path - path defined by the user
+	 * @param {GeneratorFunction} handler
+	 * @param {object} [options]
+	 * @param {boolean} [options.all]
+	 */
 	constructor(path, handler, options) {
 		this.path = path;
 		this.handler = handler;
@@ -15,9 +22,12 @@ export default class Route {
 
 		this.keys = [];
 
+		// If the option is an `all` option, then we regex differently
 		if (options.all) {
 			this.regex = new RegExp(path.replace(/\*/g, '.*?'));
-		} else {
+		}
+		// Else we want to make sure the path has valid path parameters
+		else {
 			this.regex = pathToRegExp(path, this.keys);
 		}
 	}
@@ -33,28 +43,14 @@ export default class Route {
 	 * @returns {Object|null}
 	 */
 	matches(url) {
-
 		if (!url) {
 			return null;
 		}
 
-		const hashPosition = url.indexOf('#');
-		let hash = '';
+		const hashString = getHashString(url);
+		const queryString = getQueryString(url);
 
-		// Strip out anything before the # including the #.
-		if (hashPosition >= 0) {
-			hash = url.substring(hashPosition + 1);
-		}
-		// Get & strip query params
-		const queryPosition = url.indexOf('?');
-		let queryString = '';
-
-		// Strip out query string.
-		if (queryPosition >= 0) {
-			queryString = url.substring(queryPosition + 1, hashPosition);
-		}
-
-		const urlMatchesRoute = this.regex.exec(hash);
+		const urlMatchesRoute = this.regex.exec(hashString);
 
 		if (!urlMatchesRoute) {
 			return null;
@@ -65,12 +61,15 @@ export default class Route {
 			queryParams: {}
 		};
 
+		// If this is an `all` route, then we don't match anything.
 		if (this.options.all) {
 			return result;
 		}
 
+		// Get the query string params, if applicable. default = {}
 		result.queryParams = qsParse(queryString);
 
+		// Build up all the route params from the path-to-regexp output
 		this.keys.forEach((value, index) => {
 			result.routeParams[value.name] = urlMatchesRoute[index + 1];
 		});
@@ -91,4 +90,33 @@ export default class Route {
 			return null;
 		}
 	}
+}
+
+
+function getHashString(url) {
+	const hashPosition = url.indexOf('#');
+
+	// Strip out anything before the # including the #.
+	if (hashPosition >= 0) {
+		return url.substring(hashPosition + 1);
+	}
+
+	return '';
+}
+
+function getQueryString(url) {
+	// Get the query param position and strip it from the url for parsing.
+	const queryPosition = url.indexOf('?');
+	let hashPosition = url.indexOf('#');
+
+	// Strip out query string.
+	if (queryPosition >= 0) {
+		if (hashPosition === -1) {
+			hashPosition = url.length;
+		}
+
+		return url.substring(queryPosition + 1, hashPosition);
+	}
+
+	return '';
 }

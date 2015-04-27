@@ -9,7 +9,6 @@ const RouterActions = require('./router/RouterActions.es6');
 const Router = {
 	mixin: {
 		getPath: RouterStore.getPath,
-		getHashPath: RouterStore.getHashPath,
 		getPathParams: RouterStore.getPathParams,
 		getQueryParams: RouterStore.getQueryParams
 	},
