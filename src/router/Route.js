@@ -2,17 +2,24 @@
 
 const pathToRegExp = require('path-to-regexp');
 const reverend = require('reverend');
+const qsParse = require('qs/lib/parse');
 
 const URL = Symbol();
 const HANDLER = Symbol();
 
 export default class Route {
-	constructor(path, handler, reactElement, mountNodeID) {
+	constructor(path, handler, options) {
 		this.path = path;
 		this.handler = handler;
+		this.options = options;
 
 		this.keys = [];
-		this.regex = pathToRegExp(path, this.keys);
+
+		if (options.all) {
+			this.regex = new RegExp(path.replace(/\*/g, '.*?'));
+		} else {
+			this.regex = pathToRegExp(path, this.keys);
+		}
 	}
 
 	/**
@@ -32,32 +39,43 @@ export default class Route {
 		}
 
 		const hashPosition = url.indexOf('#');
+		let hash = '';
 
 		// Strip out anything before the # including the #.
 		if (hashPosition >= 0) {
-			url = url.substring(hashPosition + 1);
+			hash = url.substring(hashPosition + 1);
 		}
 		// Get & strip query params
 		const queryPosition = url.indexOf('?');
+		let queryString = '';
 
 		// Strip out query string.
 		if (queryPosition >= 0) {
-			url = url.substring(0, queryPosition);
+			queryString = url.substring(queryPosition + 1, hashPosition);
 		}
 
-		const urlMatchesRoute = this.regex.exec(url);
+		const urlMatchesRoute = this.regex.exec(hash);
 
 		if (!urlMatchesRoute) {
 			return null;
 		}
 
-		const routeParams = {};
+		const result = {
+			routeParams: {},
+			queryParams: {}
+		};
+
+		if (this.options.all) {
+			return result;
+		}
+
+		result.queryParams = qsParse(queryString);
 
 		this.keys.forEach((value, index) => {
-			routeParams[value.name] = urlMatchesRoute[index + 1];
+			result.routeParams[value.name] = urlMatchesRoute[index + 1];
 		});
 
-		return routeParams;
+		return result;
 	}
 
 	/**

@@ -42,6 +42,9 @@
     "space-before-function-paren": [1, {"anonymous": "always", "named": "never"}],
     "space-after-keywords": [2, "always"]
   },
+  "globals": {
+    "React": true
+  },
   "env":{
     "browser": true,
     "es6": true,

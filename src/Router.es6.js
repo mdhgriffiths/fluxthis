@@ -2,45 +2,51 @@
 
 require('babel/polyfill');
 
-const React = require('react');
+const RouterStore = require('./router/RouterStore.es6');
+const RouterActions = require('./router/RouterActions.es6');
 
-var x = {
-	Router: require('./router/RouterStore.es6'),
-	Handler: require('./router/RouterComponent.es6.jsx')
+
+const Router = {
+	mixin: {
+		getPath: RouterStore.getPath,
+		getHashPath: RouterStore.getHashPath,
+		getPathParams: RouterStore.getPathParams,
+		getQueryParams: RouterStore.getQueryParams
+	},
+	RouterStore,
+	use: RouterActions.use,
+	all: RouterActions.all,
+	route: RouterActions.route,
 };
 
-const Foobar = {};
-const defaultProps = {};
-
-x.Router.setupRoutes({
-	mountNodeID: 'body',
-	defaultPath: 'user_list',
-	routes: {
-		default: {
-			path: '/',
-			handler() {
-			}
-		},
-		setupFoobar: {
-			path: '/foo/:bar',
-			handler(bar) {
-				// Set default props
-				//this.setReactElement(Foobar, {bar}, 'optionalMountNode');
-			}
-		},
-		userList: {
-			path: '/users',
-			handler() {
-				//this.navigateTo('setup_foobar', {bar: 'bar'});
-			}
-		}
-	}
-});
-
-x.Router.setReactElement(
-	React.createClass({
-		render() {
-			return (<div>sup</div>);
-		}
+Router
+	.use(function *check(next) {
+		// do some checks
+		yield next;
 	})
-);
+	.use(function *foo(next) {
+		// do stuff
+		yield next;
+		// do more stuff
+	})
+	.all('*', function *handler(next) {
+		yield next;
+	})
+	.route('/', 'default', function *handler(next) {
+		//this.setReactElement();
+		yield next;
+	}, {default: true})
+	.route('/foo/:bar', 'setupFoobar', function *handler(next) {
+		const pathParams = this.getPathParams();
+		this.setReactElement();
+
+		yield next;
+	})
+	.route('/users', 'userList', function *handler(next) {
+		this.navigateTo('setupFoobar', {bar: 'foo'});
+		yield next;
+	})
+	.use(function *foo(next) {
+		yield next;
+	})
+	.start();

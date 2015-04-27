@@ -162,6 +162,8 @@ class ActionCreator {
 			debug.logActionCreator(this, name, payload, ...args);
 
 			dispatcher.dispatch(action);
+
+			return this;
 		};
 
 		debug.registerAction(this, {source, type});

@@ -25,9 +25,18 @@ var webpack = require('webpack');
 var gulpWebpack = require('gulp-webpack');
 var webpackConfig = require('./webpack.config');
 var testWebpackConfig = require('./test/webpack.config');
+var babel = require('gulp-babel');
+var ext_replace = require('gulp-ext-replace');
 
 var tag = require('./bin/tag');
 var runSequence = require('run-sequence');
+
+gulp.task('default', function () {
+    return gulp.src('src/**/*.js')
+        .pipe(babel())
+        .pipe(ext_replace('.js', '.es6.js'))
+        .pipe(gulp.dest('build'));
+});
 
 gulp.task('test-server-start', function () {
     server.run(['test/server.js']);
@@ -96,10 +105,10 @@ gulp.task('build-prod', function () {
 
 gulp.task('watch', function () {
     webpackConfig.watch = true;
-    //webpackConfig.entry.FluxThis = './src/Router.es6';
-    //webpackConfig.output.path = '';
-    //webpackConfig.output.filename = 'Router.js';
-    //webpackConfig.output.library = 'Router';
+    webpackConfig.entry.FluxThis = './src/Router.es6';
+    webpackConfig.output.path = '';
+    webpackConfig.output.filename = 'Router.js';
+    webpackConfig.output.library = 'Router';
 
     return gulp.src(webpackConfig.entry.FluxThis)
         .pipe(gulpWebpack(webpackConfig))
@@ -108,7 +117,7 @@ gulp.task('watch', function () {
 
 gulp.task('clean', function () {
     return gulp.src(['build/*', 'test/build/*'])
-        .pipe(clean())
+        .pipe(clean());
 });
 
 gulp.task('lint', function () {
@@ -137,5 +146,3 @@ gulp.task('publish', function (callback) {
         'tag',
         callback);
 });
-
-

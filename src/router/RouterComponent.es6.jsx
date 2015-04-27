@@ -1,6 +1,5 @@
 'use strict';
 
-const React = require('react');
 const ImmutablePureRenderMixin = require('react-immutable-render-mixin');
 
 const RouterStore = require('./RouterStore.es6');
@@ -24,7 +23,6 @@ export default React.createClass({
 		if (!ReactComponent) {
 			return null;
 		}
-
 		const RouterState = Object.assign({
 				RouterState: {
 					queryParams: this.state.queryParams,

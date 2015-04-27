@@ -13,7 +13,7 @@
  */
 
 var ActionCreator = require('../../src/ActionCreator.es6');
-var ConstantCollection = require('../../src/ConstantCollection.es6')
+var ConstantCollection = require('../../src/ConstantCollection.es6');
 var Dispatcher = require('../../src/Dispatcher.es6');
 var Store = require('../../src/ImmutableStore.es6');
 

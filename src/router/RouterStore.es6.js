@@ -1,12 +1,15 @@
 'use strict';
 
+const Immutable = require('immutable');
+const invariant = require('invariant');
 
 const ObjectOrientedStore = require('./../ObjectOrientedStore.es6.js');
 const Route = require('./Route');
+const Constants = require('./RouterConstants.es6');
+const RouterActions = require('./RouterActions.es6');
 
-const React = require('react');
-const Immutable = require('immutable');
-const invariant = require('invariant');
+const co = require('co');
+const compose = require('koa-compose');
 
 const DisplayName = 'FluxThisRouter';
 
@@ -14,15 +17,24 @@ module.exports = new ObjectOrientedStore({
 	displayName: DisplayName,
 	init() {
 		this.defaultPath = '';
-		this.routeNotFoundPath = '';
 
 		this.currentRoute = null;
 		this.routes = {};
 
+		this.defaultPath = '';
+
+		this.middleware = [];
+
 		this.bindActions(
-			'SET_ROUTES', this.setupRoutes,
-			'ROUTE_CHANGE', this.changeRoute
+			Constants.ROUTER_USE_ACTION, this.addMiddleware,
+			Constants.ROUTER_SETUP_ALL_ROUTE_ACTION, this.setupAllRoute,
+			Constants.ROUTER_SETUP_ROUTE_ACTION, this.setupRoute,
+			Constants.ROUTER_SET_REACT_ELEMENT, this.setReactElement,
+			Constants.ROUTER_START, this.startRouter,
+			Constants.ROUTE_CHANGE, this.changeRoute
 		);
+
+		window.onhashchange = this.changeRoute;
 	},
 	public: {
 		getReactElement() {
@@ -32,60 +44,75 @@ module.exports = new ObjectOrientedStore({
 			return this.reactElementProps || {};
 		},
 		getPathParams() {
-			return this.currentPathParams;
+			return Immutable.fromJS(this.currentPathParams);
 		},
 		getQueryParams() {
-			return this.currentQueryParams;
+			return Immutable.fromJS(this.currentQueryParams);
 		},
 		getPath() {
 			return this.path;
 		},
 		getHashPath() {
-			return this.currentHash;
-		},
-		/**
-		 * TODO: Make sure this isn't exposed publicly except to the router
-		 */
-		setReactElement(reactElement, props={}) {
-			this.setReactElement(reactElement, props);
-		},
-		setupRoutes(config) {
-			//TODO: Add invariants
-			this.defaultPath = config.defaultPath;
-			this.routeNotFoundPath = config.routeNotFoundPath || this.defaultPath;
-
-			this.currentRoute = null;
-			this.routes = {};
-
-			for (let key in config.routes) {
-				this.routes[key] = new Route(
-					config.routes[key].path,
-					config.routes[key].handler
-				);
-			}
-
-			this.setupRoute();
-
-			const RouterHandler = require('./RouterComponent.es6.jsx');
-
-			React.render(
-				React.createElement(RouterHandler),
-				document.getElementById(config.mountNodeID)
-			);
+			return window.location.href.split('#')[1];
 		}
 	},
 	private: {
-		setReactElement(reactElement, props={}) {
+		getContext() {
+			return {
+				getPath: this.getPath,
+				getHashPath: this.getHashPath,
+				getPathParams: this.getPathParams,
+				getQueryParams: this.getQueryParams,
+				setReactElement: RouterActions.setReactElement
+			};
+		},
+		startRouter() {
+			this.changeRoute();
+		},
+		setupAllRoute(payload) {
+			let {path, handler} = payload;
+
+			let route = new Route(path, handler, {all: true});
+
+			this.middleware.push(routeMiddleware(this, route));
+		},
+		setupRoute(payload) {
+			let {path, name, handler, options} = payload;
+
+			// TODO: Add invariant on existing same name
+			let route = new Route(path, handler, options);
+
+			if (options.default) {
+				this.defaultPath = name;
+			}
+
+			this.routes[name] = route;
+
+			this.middleware.push(routeMiddleware(this, route));
+		},
+		setReactElement(payload) {
+			const {reactElement, props} = payload;
 			this.reactElement = reactElement;
 			this.reactElementProps = props;
 		},
-		changeRoute(path) {
-			// TODO: Take args which should have new path. set hash. resetup route
-			window.location.hash = `#${path}`;
-			this.setupRoute();
+		changeRoute() {
+			if (!this.getHashPath()) {
+				window.location.hash = this.routes[this.defaultPath].path;
+				return;
+			}
+
+			let mw = [setupContext(this)].concat(this.middleware);
+
+			let fn = co.wrap(compose(mw));
+
+			setTimeout(function () {
+				fn().catch(function (error) {
+					debugger;
+				});
+			});
 		},
 		checkIfHashIsMissingAndSetup() {
-			if (!window.location.hash) {
+			if (!this.getHashPath()) {
 				this.navigateToDefaultPath();
 			}
 		},
@@ -93,25 +120,40 @@ module.exports = new ObjectOrientedStore({
 			const route = this.routes[this.defaultPath];
 			window.location.hash = route.path;
 		},
-		setupRoute() {
-			this.checkIfHashIsMissingAndSetup();
-
-			this.currentRoute = null;
-
-			for (let key in this.routes) {
-
-				let route = this.routes[key];
-				this.currentQueryParams = route.matches(window.location.href);
-
-				if (this.currentQueryParams) {
-					this.currentRoute = Object.freeze(route);
-					break;
-				}
-			}
-
-			if (!this.currentRoute) {
-				return this.navigateToDefaultPath();
-			}
+		/**
+		 * Add a new middleware function with the allowed methods as a context
+		 * to the list of middleware functions
+		 *
+		 * @param {Function}  generator function to be added.
+		 */
+		addMiddleware(func) {
+			this.middleware.push(func.bind(this.getContext()));
 		}
 	}
 });
+
+function setupContext(context) {
+	return function *setupContext(next) {
+		context.checkIfHashIsMissingAndSetup();
+
+		context.currentRoute = null;
+
+		yield *next;
+
+		// Todo figure out some check for 404s... maybe just follow koa.
+	};
+}
+function routeMiddleware(store, route) {
+	return function *routeMiddleware(next) {
+		let result = {};
+
+		if ((result = route.matches(window.location.href))) {
+			store.currentPathParams = result.pathParams;
+			store.currentQueryParams = result.queryParams;
+			store.currentRoute = route;
+			yield *store.currentRoute.handler.call(store.getContext(), next);
+		} else {
+			yield next;
+		}
+	};
+}
