@@ -15,47 +15,70 @@ const Router = {
 	RouterStore,
 	use: RouterActions.use,
 	all: RouterActions.all,
-	route: RouterActions.route,
+	route: RouterActions.route
 };
+
+window.Router = Router;
+
+React.render(React.createElement(React.createClass({
+	displayName: 'MainComponent',
+	mixins: [Router.RouterStore.mixin],
+	getStateFromStores() {
+		return {
+			reactElement: RouterStore.getReactElement(),
+			reactElementProps: RouterStore.getReactElementProps()
+			// you can also use any other getters from the store
+			// like getPath, getQueryParams, getPathParams
+		};
+	},
+	render() {
+		const {reactElement: ReactComponent, reactElementProps: props} = this.state;
+
+		if (!ReactComponent) {
+			return null;
+		}
+
+		return (
+			<ReactComponent {...props} />
+		);
+	}
+})), document.body);
+
+const el = React.createClass({
+	render() {
+		return (<div>sup</div>);
+	}
+});
+
+const el2 = React.createClass({
+	render() {
+		return (<div>{this.props.propValue}</div>);
+	}
+});
 
 Router
 	.use(function *check(next) {
 		// do some checks
-		console.log('start');
 		yield *next;
-		console.log('done');
 	})
 	.use(function *foo(next) {
-		// do stuff
 		yield *next;
-		// do more stuff
 	})
-	// .all('*', function *handler(next) {
-	// 	yield next;
-	// })
+	.all('*', function *handler(next) {
+		yield *next;
+	})
 	.route('/', 'default', function *handler(next) {
-		//this.setReactElement();
+		this.setReactElement(el);
 		yield *next;
-	}, {default: true})
-	// .route('/foo/:bar', 'setupFoobar', function *handler(next) {
-	// 	const pathParams = this.getPathParams();
-	// 	this.setReactElement();
-
-	// 	yield next;
-	// })
-	// .route('/users', 'userList', function *handler(next) {
-	// 	this.navigateTo('setupFoobar', {bar: 'foo'});
-	// 	yield next;
-	// })
-	.use(function *foo(next) {
-		console.log('middle 1');
-		yield new Promise(resolve => {
-			setTimeout(() => {
-				console.log('middle 1.5');
-				resolve();
-			}, 1000);
-		})
+	}, {
+		default: true
+	})
+	.route('/foo/:bar', 'setupFoobar', function *handler(next) {
+		const pathParams = this.getPathParams();
+		this.setReactElement(el2, {propValue: pathParams.get('bar')});
 		yield *next;
-		console.log('middle 2');
+	})
+	.use(function *done(next) {
+		yield *next;
 	})
 	.start();

@@ -4,9 +4,6 @@ const pathToRegExp = require('path-to-regexp');
 const reverend = require('reverend');
 const qsParse = require('qs/lib/parse');
 
-const URL = Symbol();
-const HANDLER = Symbol();
-
 export default class Route {
 	/**
 	 *
@@ -57,7 +54,7 @@ export default class Route {
 		}
 
 		const result = {
-			routeParams: {},
+			pathParams: {},
 			queryParams: {}
 		};
 
@@ -71,7 +68,7 @@ export default class Route {
 
 		// Build up all the route params from the path-to-regexp output
 		this.keys.forEach((value, index) => {
-			result.routeParams[value.name] = urlMatchesRoute[index + 1];
+			result.pathParams[value.name] = urlMatchesRoute[index + 1];
 		});
 
 		return result;

@@ -10,4 +10,4 @@ export default new ConstantCollection(
 	'ROUTER_SET_REACT_ELEMENT',
 	'ROUTER_START',
 	'ROUTE_CHANGE'
-)
+);
