@@ -105,7 +105,7 @@ gulp.task('build-prod', function () {
 
 gulp.task('watch', function () {
     webpackConfig.watch = true;
-    webpackConfig.entry.FluxThis = './src/Router.es6';
+    webpackConfig.entry.FluxThis = './src/router/router_test.js';
     webpackConfig.output.path = '';
     webpackConfig.output.filename = 'Router.js';
     webpackConfig.output.library = 'Router';
