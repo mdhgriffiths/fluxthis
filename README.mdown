@@ -25,3 +25,14 @@ AddThis.
 * [Debugging](http://fluxthis.io/#/docs/debugging)
 * [Testing](http://fluxthis.io/#/docs/testing)
 
+### Versioning
+
+It's x.y.z where:
+
+ * x: Something Big Happened
+ * y: next release
+ * z: strive for bug fix only
+
+### Changes
+ * v2.0.0 (5/21/15)
+    - Removed the babel global polyfil in favor of runtime alternative. This means that any projects depending on this polyfil need to require it themselves manually.

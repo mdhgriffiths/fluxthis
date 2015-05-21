@@ -18,6 +18,7 @@ const dispatcher = require('./dispatcherInstance.es6');
 const debug = require('./debug.es6');
 const each = require('../lib/each');
 const PropTypes = require('react/lib/ReactPropTypes');
+const deprecated = require('../lib/deprecated.es6');
 const invariant = require('invariant');
 
 const RE_REQUIRED_PROP = /Required prop `(.*?)`/;
@@ -25,8 +26,8 @@ const RE_REQUIRED_PROP = /Required prop `(.*?)`/;
 const RE_WARNING_EXPECTED = /expected (.*`(.*?)`)/;
 const RE_WARNING_FOUND = /type `(.*?)`/;
 
+const ActionTypes = new Set();
 const DisplayNames = new Set();
-const ActionSources = new Map();
 
 /**
  * @typedef {object} ApiDescription
@@ -40,15 +41,13 @@ const ActionSources = new Map();
 
 /**
  * Creates a flux ActionCreator which dispatches actions after validating
- * payloads. ActionCreators are used to set an action's `source` when
- * dispatching.
+ * payloads.
  */
 class ActionCreator {
 
 	/**
 	 * @param {object} options
 	 * @param {string} options.displayName
-	 * @param {Constant} options.actionSource
 	 * @param {object<ApiDescription>} options.api - used to build public API,
 	 *	the key is the resulting function's name
 	 * @param {object} [moreReservedKeys] - map of a key found in `options` to 1
@@ -71,26 +70,18 @@ class ActionCreator {
 			'Could not create ActionCreator. Missing required parameter `displayName`'
 		);
 
-		invariant(
-			options.actionSource,
-			'Could not create `%s`. Missing required parameter `actionSource`',
-			this
-		);
-
-		// Lets make sure we have unique action sources
-		invariant(
-			!ActionSources.has(options.actionSource),
-			`ActionCreator - Your actionSource of ` +
-			`${options.actionSource} is not unique.`
-		);
-		ActionSources.set(options.actionSource, new Set());
-
 		// Lets make sure we have unique display names
 		invariant(
 			!DisplayNames.has(options.displayName),
 			`ActionCreator - Your displayName of ` +
 			`${options.displayName} is not unique.`
 		);
+
+		deprecated(
+			options.actionSource,
+			`ActionCreator.actionSource`
+		);
+
 		DisplayNames.add(options.displayName);
 
 		// create public methods for every key on options that isn't a reserved
@@ -111,13 +102,26 @@ class ActionCreator {
 	 * @param {string} name - methods name to create
 	 * @param {ApiDescription} description - specifics about the method to
 	 * @param {Function} description.createPayload
-	 * @param {string} description.payloadType
-	 * @param {string} description.actionType
+	 * @param {PayloadType} description.payload
+	 * @param {string} description.type
 	 *	create
 	 */
 	createPublicMethod(name, description) {
-		let {createPayload, payloadType, actionType: type} = description;
-		let source = this.actionSource;
+		let createPayload = description.createPayload;
+		let payloadType = description.payload || description.payloadType;
+		let type = description.type || description.actionType;
+
+		deprecated(
+			description.actionType,
+			'ActionCreator.Action.actionType',
+			'ActionCreator.Action.type'
+		);
+
+		deprecated(
+			description.payloadType,
+			'ActionCreator.Action.payloadType',
+			'ActionCreator.Action.payload'
+		);
 
 		invariant(
 			type !== undefined,
@@ -135,18 +139,17 @@ class ActionCreator {
 			this
 		);
 
-		// Now lets make sure we haven't already registered this
-		// action for the current source.
-		const actions = ActionSources.get(source);
-
+		// Now lets make sure we haven't already registered aciton type
 		invariant(
-			!actions.has(type),
+			!ActionTypes.has(type),
 			`${this} - already has an action with type ${type} already ` +
 			'registered.'
 		);
 
 		// Add the new type to the Set so we can keep checking for uniqueness.
-		actions.add(type);
+		ActionTypes.add(type);
+
+		let actionSource = this.actionSource;
 
 		this[name] = (payload, ...args) => {
 			if (createPayload) {
@@ -157,7 +160,11 @@ class ActionCreator {
 				this.validatePayload(name, payload, payloadType);
 			}
 
-			let action = {source, type, payload};
+			let action = {type, payload};
+
+			if (actionSource) {
+				action.source = actionSource;
+			}
 
 			debug.logActionCreator(this, name, payload, ...args);
 
@@ -166,7 +173,7 @@ class ActionCreator {
 			return this;
 		};
 
-		debug.registerAction(this, {source, type});
+		debug.registerAction(this, {type});
 	}
 
 	/**

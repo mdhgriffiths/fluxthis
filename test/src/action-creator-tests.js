@@ -17,24 +17,20 @@ var ConstantCollection = require('../../src/ConstantCollection.es6');
 
 describe('ActionCreators', function () {
 
-	it('should thrown an error without actionSource', function () {
-		(function () {
-			new ActionCreator({
-				displayName: 'ac1'
-			});
-		}).should.throw();
-	});
-
-	it('should thrown an error for duplicate action sources', function () {
+	it('should thrown an error for duplicate action types', function () {
 		(function () {
 			new ActionCreator({
 				displayName: 'acDisplay1',
-				actionSource: 'TEST'
+				test: {
+					type: 'DUPLICATE_TYPE'
+				}
 			});
 
 			new ActionCreator({
 				displayName: 'acDisplay2',
-				actionSource: 'TEST'
+				test: {
+					type: 'DUPLICATE_TYPE'
+				}
 			});
 		}).should.throw();
 	});
@@ -42,7 +38,6 @@ describe('ActionCreators', function () {
 	it('should thrown an error without display name', function () {
 		(function () {
 			new ActionCreator({
-				actionSource: 'acSource1'
 			});
 		}).should.throw();
 	});
@@ -51,12 +46,10 @@ describe('ActionCreators', function () {
 		(function () {
 			new ActionCreator({
 				displayName: 'duplicate',
-				actionSource: 'acSource2'
 			});
 
 			new ActionCreator({
 				displayName: 'duplicate',
-				actionSource: 'acSource3'
 			});
 		}).should.throw();
 	});
@@ -64,9 +57,8 @@ describe('ActionCreators', function () {
 	it('should expose methods passed to their constructor', function () {
 		var ac = new ActionCreator({
 			displayName: 'ac2',
-			actionSource: 'acSource4',
 			doThing: {
-				actionType: 'TEST_' + Math.random()
+				type: 'TEST_' + Math.random()
 			}
 		});
 
@@ -76,9 +68,8 @@ describe('ActionCreators', function () {
 	it('should call createPayload', function (done) {
 		var ac = new ActionCreator({
 			displayName: 'ac3',
-			actionSource: 'acSource5',
 			doThing: {
-				actionType: 'TEST_' + Math.random(),
+				type: 'TEST_' + Math.random(),
 				createPayload: function () {
 					done();
 				}
@@ -91,9 +82,8 @@ describe('ActionCreators', function () {
 	it('should not expose a dispatch method', function () {
 		var ac = new ActionCreator({
 			displayName: 'ac4',
-			actionSource: 'acSource6',
 			doThing: {
-				actionType: 'TEST_' + Math.random()
+				type: 'TEST_' + Math.random()
 			}
 		});
 
@@ -102,25 +92,23 @@ describe('ActionCreators', function () {
 
 	it('should have a nice looking `toString`', function () {
 		var ac = new ActionCreator({
-			actionSource: 'ac5',
 			displayName: 'acSource7'
 		});
 
 		ac.toString().should.equal('[ActionCreator acSource7]');
 	});
 
-	it('should not allow creation without an `actionSource`', function () {
+	it('should allow creation without an `actionSource`', function () {
 		(function () {
 			new ActionCreator({
 				displayName: 'ac6'
 			});
-		}).should.throw();
+		}).should.not.throw();
 	});
 
-	it('should not allow creation without `actionType`', function () {
+	it('should not allow creation without `type`', function () {
 		(function () {
 			new ActionCreator({
-				actionSource: 'acSource8',
 				displayName: 'ac7',
 				doThing: {
 					payloadType: ActionCreator.PayloadTypes.string
@@ -132,10 +120,9 @@ describe('ActionCreators', function () {
 	it('should allow creation without `payloadType`', function () {
 		(function () {
 			new ActionCreator({
-				actionSource: 'acSource9',
 				displayName: 'ac8',
 				doThing: {
-					actionType: 'TEST_' + Math.random()
+					type: 'TEST_' + Math.random()
 				}
 			});
 		}).should.not.throw();
@@ -143,10 +130,9 @@ describe('ActionCreators', function () {
 
 	it('should call createPayload in the context of the actioncreator', function (done) {
 		var ac = new ActionCreator({
-			actionSource: 'acSource10',
 			displayName: 'ac9',
 			doThing: {
-				actionType: 'TEST_' + Math.random(),
+				type: 'TEST_' + Math.random(),
 				createPayload: function () {
 					ac.should.equal(this);
 					done();
@@ -167,12 +153,11 @@ describe('ActionCreators', function () {
 		(function () {
 			var ac = new ActionCreator({
 				displayName: 'CCtest',
-				actionSource: 'CC_TEST',
 				addColor: {
-					actionType: ACTION_TYPES.ADD_COLOR
+					type: ACTION_TYPES.ADD_COLOR
 				},
 				removeColor: {
-					actionType: ACTION_TYPES.REMOVE_COLOR
+					type: ACTION_TYPES.REMOVE_COLOR
 				}
 			});
 		}).should.not.throw();
@@ -189,12 +174,11 @@ describe('ActionCreators', function () {
 		(function () {
 			var ac = new ActionCreator({
 				displayName: 'CCtest',
-				actionSource: 'CC_TEST',
 				addColor: {
-					actionType: ACTION_TYPES.ADD_COLOR
+					type: ACTION_TYPES.ADD_COLOR
 				},
 				removeColor: {
-					actionType: ACTION_TYPES.ADD_COLOR
+					type: ACTION_TYPES.ADD_COLOR
 				}
 			});
 		}).should.throw();
@@ -203,10 +187,9 @@ describe('ActionCreators', function () {
 
 	it('should warn correctly when payload types don\'t match', function () {
 		var ac = new ActionCreator({
-			actionSource: 'acSource11',
 			displayName: 'ac10',
 			doThing: {
-				actionType: 'TEST_' + Math.random(),
+				type: 'TEST_' + Math.random(),
 				payloadType: ActionCreator.PayloadTypes.string
 			}
 		});
@@ -220,10 +203,9 @@ describe('ActionCreators', function () {
 
 	it('should warn correctly when complex payload types don\'t match', function () {
 		var ac = new ActionCreator({
-			actionSource: 'acSource12',
 			displayName: 'ac11',
 			doThing: {
-				actionType: 'TEST_' + Math.random(),
+				type: 'TEST_' + Math.random(),
 				payloadType: ActionCreator.PayloadTypes.shape({
 					a: ActionCreator.PayloadTypes.string,
 					b: ActionCreator.PayloadTypes.number

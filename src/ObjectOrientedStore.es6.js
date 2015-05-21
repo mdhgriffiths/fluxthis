@@ -107,7 +107,7 @@ export default class ObjectOrientedStore extends Store {
 					/**
 					 * This method is what the dispatcher uses whenever
 					 * an action has been dispatched that this store cares
-					 * about. This method will invoke the methods
+					 * about. This method will invoke the store's methods
 					 *
 					 * @param {object} action
 					 * @param {string} action.type
@@ -186,7 +186,28 @@ export default class ObjectOrientedStore extends Store {
 			);
 
 			publicMethods[prop] = function publicMethod() {
-				return method.apply(privateMembers, arguments);
+				// ensure no mutations happen on `this`
+				let privateMembersCopy = {};
+				if (process.env.NODE_ENV !== 'production') {
+					each(privateMembers, (key, val) => {
+						privateMembersCopy[key] = val;
+					});
+				}
+
+				let result = method.apply(privateMembers, arguments);
+
+				if (process.env.NODE_ENV !== 'production') {
+					each(privateMembers, (key) => {
+						invariant(
+							privateMembersCopy[key] === privateMembers[key],
+							`Public function ${options.displayName}.` +
+							`${prop} mutated private members. Use a private ` +
+							`method instead!`
+						);
+					});
+				}
+
+				return result;
 			};
 		});
 
