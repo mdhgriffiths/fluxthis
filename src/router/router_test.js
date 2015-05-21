@@ -48,7 +48,6 @@ function test(router) {
 	});
 
 	router.route('/', 'default', function *handler(next) {
-		debugger;
 		this.setReactElement(el);
 		yield *next;
 	}, {
@@ -59,7 +58,6 @@ function test(router) {
 
 function foo(router) {
 	router.route('/foo/:bar?', 'setupFoobar', function *handler(next) {
-		debugger;
 		const pathParams = this.getPathParams();
 		this.setReactElement(el2, {propValue: pathParams.get('bar')});
 		yield *next;
@@ -83,7 +81,6 @@ function endMiddleware(router) {
 	});
 }
 
-debugger;
 Router
 	.register(startMiddleware)
 	.register(foo)
