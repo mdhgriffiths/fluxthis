@@ -110,6 +110,7 @@ module.exports = new ObjectOrientedStore({
 		 * @return {object}
 		 */
 		getRouteContext() {
+			// TODO: Don't create this guy here / investigate other places.
 			return {
 				getPath: this.getPath,
 				getPathParams: this.getPathParams,
